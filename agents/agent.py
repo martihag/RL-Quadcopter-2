@@ -74,6 +74,7 @@ class Actor:
         self.action_low = action_low
         self.action_high = action_high
         self.action_range = self.action_high - self.action_low
+        self.dropout_rate = .15
 
         # Initialize any other variables here
 
@@ -86,8 +87,13 @@ class Actor:
 
         # Add hidden layers
         net = layers.Dense(units=32, activation='relu')(states)
+        net = layers.Dropout(self.dropout_rate)(net)
+        
         net = layers.Dense(units=64, activation='relu')(net)
+        net = layers.Dropout(self.dropout_rate)(net)
+        
         net = layers.Dense(units=32, activation='relu')(net)
+        net = layers.Dropout(self.dropout_rate)(net)
 
         # Try different layer sizes, activations, add batch normalization, regularizers, etc.
 
@@ -155,7 +161,8 @@ class Critic:
         net = layers.Activation('relu')(net)
 
         # Add more layers to the combined network if needed
-
+        net = layers.Dense(units=32, activation='relu')(actions)
+        
         # Add final output layer to prduce action values (Q values)
         Q_values = layers.Dense(units=1, name='q_values')(net)
 
@@ -197,8 +204,8 @@ class DDPG():
 
         # Noise process
         self.exploration_mu = 0
-        self.exploration_theta = 0.15
-        self.exploration_sigma = 0.2
+        self.exploration_theta = 0.1
+        self.exploration_sigma = 1.5
         self.noise = OUNoise(self.action_size, self.exploration_mu, self.exploration_theta, self.exploration_sigma)
 
         # Replay memory
@@ -208,7 +215,7 @@ class DDPG():
 
         # Algorithm parameters
         self.gamma = 0.99  # discount factor
-        self.tau = 0.01  # for soft update of target parameters
+        self.tau = 0.005  # for soft update of target parameters
 
     def reset_episode(self):
         self.noise.reset()
